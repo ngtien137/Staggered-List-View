@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <FrameLayout
             android:id="@+id/layoutParent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

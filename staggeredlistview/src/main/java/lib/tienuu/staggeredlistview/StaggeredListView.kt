@@ -13,6 +13,7 @@ import android.widget.RelativeLayout
 import android.widget.ScrollView
 import androidx.annotation.LayoutRes
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.core.widget.NestedScrollView
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.LifecycleOwner
@@ -37,6 +38,13 @@ class StaggeredListView @JvmOverloads constructor(
         }
 
     var countOnLayout = 0
+    private var currentSectionScroll = -1
+
+    private var sectionOffset = 0
+
+    val heightScreen by lazy {
+        context.resources.displayMetrics.heightPixels
+    }
 
     @SuppressLint("DrawAllocation")
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -55,25 +63,60 @@ class StaggeredListView @JvmOverloads constructor(
                 (scrollView.parent as ViewGroup?)?.removeAllViews()
             }
             addView(scrollView)
-            /**
-             * I'm using a Linearlayout with orientation vertical inside a scrollview
-            So when i add a view to linearlayout, it's height will be increase though i has set it to another columns
-            I try to fix it by set linearlayout height, but it's not working
-            So for fixing it, i wrap a Relative with height is max height of columns
-            Then linear layout will be perfect inside relative layout
-             */
+
             val parentWrap =
                 scrollView.findViewById<RelativeLayout>(R.id.parentWrap) //Wrap relative layout
             parentWrap.layoutParams =
                 parentWrap.layoutParams.also { it.height = adapter!!.maxHeight }
-            val itemLayoutParent = scrollView.findViewById<LinearLayoutCompat>(R.id.layoutParent)
+            val itemLayoutParent = scrollView.findViewById<FrameLayout>(R.id.layoutParent)
+
+            (scrollView.findViewById<ScrollView>(R.id.scrollView)).viewTreeObserver.addOnScrollChangedListener {
+                val scrollY = scrollView.scrollY
+                val indexSection = scrollY / heightScreen
+                loge("ParentSize: ${itemLayoutParent.childCount}, currentSection: $currentSectionScroll")
+                if (indexSection != currentSectionScroll) {
+                    currentSectionScroll = indexSection
+                    adapter?.let { adapter ->
+                        adapter.listSectionIndex[indexSection].forEach { mapIndex ->
+                            loge("AddIndex: $mapIndex")
+                            adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                                setBindingVisible(itemBinding, itemLayoutParent)
+                            }
+                        }
+                        if (indexSection > 0) {
+                            for (mapIndex in 0 until indexSection - sectionOffset) {
+                                loge("RemoveIndex: $mapIndex")
+                                adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                                    setBindingGone(itemBinding, itemLayoutParent)
+                                }
+                            }
+                            if (sectionOffset > 0) {
+                                //visible indexSection -offset
+                            }
+                        }
+                        if (indexSection < adapter.listSectionIndex.size - 1) {
+                            if (indexSection + 1 + sectionOffset < adapter.listSectionIndex.size)
+                                for (mapIndex in indexSection + 1 + sectionOffset until adapter.listSectionIndex.size) {
+                                    loge("RemoveIndex: $mapIndex")
+                                    adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                                        setBindingGone(itemBinding, itemLayoutParent)
+                                    }
+                                }
+                            if (sectionOffset > 0) {
+                                //visible indexSection + offset
+                            }
+                        }
+                    }
+                }
+            }
+
             adapter?.data?.forEachIndexed(action = { index, staggeredData ->
                 adapter!!.mapRowData[staggeredData]?.let { rowData ->
                     val positionX = rowData.columnIndex * widthItem
                     val positionY = rowData.offsetY
                     val itemBinding = adapter!!.getViewBinding(index)
                     itemBinding.root.layoutParams =
-                        FrameLayout.LayoutParams(rowData.width, rowData.height)
+                        LayoutParams(rowData.width, rowData.height)
                     itemBinding.root.x = positionX.toFloat()
                     itemBinding.root.y = positionY
                     if (itemBinding.root.parent != null) {
@@ -84,6 +127,26 @@ class StaggeredListView @JvmOverloads constructor(
             })
             itemLayoutParent.layoutParams.height = adapter!!.maxHeight
         }
+    }
+
+    private fun <ViewBinding : ViewDataBinding> setBindingVisible(
+        itemBinding: ViewBinding,
+        itemLayoutParent: FrameLayout
+    ) {
+        if (itemBinding.root.parent != null) {
+            if (itemBinding.root.parent != itemLayoutParent) {
+                (itemBinding.root.parent as ViewGroup?)?.removeAllViews()
+                itemLayoutParent.addView(itemBinding.root)
+            }
+        } else {
+            itemLayoutParent.addView(itemBinding.root)
+        }
+    }
+
+    private fun <ViewBinding : ViewDataBinding> setBindingGone(
+        itemBinding: ViewBinding, itemLayoutParent: FrameLayout
+    ) {
+        itemLayoutParent.removeView(itemBinding.root)
     }
 
     fun loge(message: String) {
@@ -116,6 +179,10 @@ class StaggeredListView @JvmOverloads constructor(
                 invalidate()
             }
 
+        val heightScreen by lazy {
+            context.resources.displayMetrics.heightPixels
+        }
+
         private val listColumns = ArrayList<DataColumn<Data>>()
 
         val mapBinding = HashMap<Int, ViewBinding>()
@@ -124,6 +191,8 @@ class StaggeredListView @JvmOverloads constructor(
 
         var maxHeight = 0
             private set
+
+        val listSectionIndex = ArrayList<ArrayList<Int>>()
 
         private fun createItemBinding(): ViewBinding {
             return DataBindingUtil.inflate(layoutInflater, layoutResource, null, false)
@@ -187,10 +256,20 @@ class StaggeredListView @JvmOverloads constructor(
                         col, currentOffset, widthItem,
                         heightOfThisItem.toInt()
                     )
+
+                    //add list for checking scroll
+
+                    val indexOfSectionScroll = currentOffset.toInt() / heightScreen
+                    if (listSectionIndex.getOrNull(indexOfSectionScroll) == null) {
+                        listSectionIndex.add(arrayListOf())
+                    }
+                    listSectionIndex[indexOfSectionScroll].add(currentItemIndex)
+
                     mapRowData[staggeredData] = rowData
                     listColumns[col].listData.add(staggeredData)
                     heightOfColumns += heightOfThisItem
                     currentItemIndex++
+
                     if (heightOfColumns >= heightPerColumns) {
                         if (heightOfColumns > maxHeight) {
                             maxHeight = heightOfColumns.toInt()
