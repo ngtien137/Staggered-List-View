@@ -6,6 +6,15 @@
         <variable
             name="item"
             type="Integer" />
+
+        <variable
+            name="listener"
+            type="Integer" />
+
+        <variable
+            name="itemPosition"
+            type="Integer" />
+
     </data>
 
     <RelativeLayout

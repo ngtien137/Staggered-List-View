@@ -28,7 +28,7 @@ class StaggeredListView @JvmOverloads constructor(
         const val SHOW_LOG = true
     }
 
-    val scrollView = LayoutInflater.from(context).inflate(R.layout.staggered_layout, null, false)
+    val scrollLayout = LayoutInflater.from(context).inflate(R.layout.staggered_layout, null, false)
 
     var adapter: StaggeredAdapter<out StaggeredData, out ViewDataBinding>? = null
         set(value) {
@@ -51,71 +51,65 @@ class StaggeredListView @JvmOverloads constructor(
             return
         adapter?.data?.firstOrNull()?.let command@{
             val widthItem = width / adapter!!.span
-            scrollView.layoutParams = LayoutParams(
+            scrollLayout.layoutParams = LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT
             )
-            if (scrollView.parent != null) {
-                (scrollView.parent as ViewGroup?)?.removeAllViews()
+            if (scrollLayout.parent != null) {
+                (scrollLayout.parent as ViewGroup?)?.removeAllViews()
             }
-            addView(scrollView)
+            addView(scrollLayout)
 
             val parentWrap =
-                scrollView.findViewById<RelativeLayout>(R.id.parentWrap) //Wrap relative layout
+                scrollLayout.findViewById<RelativeLayout>(R.id.parentWrap) //Wrap relative layout
             parentWrap.layoutParams =
                 parentWrap.layoutParams.also { it.height = adapter!!.maxHeight }
-            val itemLayoutParent = scrollView.findViewById<FrameLayout>(R.id.layoutParent)
+            val itemLayoutParent = scrollLayout.findViewById<FrameLayout>(R.id.layoutParent)
 
-            (scrollView.findViewById<ScrollView>(R.id.scrollView)).viewTreeObserver.addOnScrollChangedListener {
-                val scrollY = scrollView.scrollY
-                val indexSection = scrollY / heightScreen
-                loge("ParentSize: ${itemLayoutParent.childCount}, currentSection: $currentSectionScroll")
-                if (indexSection != currentSectionScroll) {
-                    currentSectionScroll = indexSection
-                    adapter?.let { adapter ->
-                        for (index in indexSection - sectionOffset..indexSection + sectionOffset) {
-                            adapter.listSectionIndex.getOrNull(index)?.forEach { mapIndex ->
-                                loge("AddIndex: $mapIndex")
-                                adapter.mapBinding[mapIndex]?.let { itemBinding ->
-                                    setBindingVisible(itemBinding, itemLayoutParent)
-                                }
-                            }
-                        }
-
-                        adapter.listSectionIndex.getOrNull(indexSection - sectionOffset - 1)
-                            ?.forEach { mapIndex ->
-                                loge("RemoveIndex: $mapIndex")
-                                adapter.mapBinding[mapIndex]?.let { itemBinding ->
-                                    setBindingGone(itemBinding, itemLayoutParent)
-                                }
-                            }
-                        adapter.listSectionIndex.getOrNull(indexSection + sectionOffset + 1)
-                            ?.forEach { mapIndex ->
-                                loge("RemoveIndex: $mapIndex")
-                                adapter.mapBinding[mapIndex]?.let { itemBinding ->
-                                    setBindingGone(itemBinding, itemLayoutParent)
-                                }
-                            }
-                    }
-                }
+            (scrollLayout.findViewById<ScrollView>(R.id.scrollView)).viewTreeObserver.addOnScrollChangedListener {
+                val scrollY = scrollLayout.scrollY
+                checkVisibleWithScrollPosition(scrollY, itemLayoutParent)
             }
 
-            adapter?.data?.forEachIndexed(action = { index, staggeredData ->
-                adapter!!.mapRowData[staggeredData]?.let { rowData ->
-                    val positionX = rowData.columnIndex * widthItem
-                    val positionY = rowData.offsetY
-                    val itemBinding = adapter!!.getViewBinding(index)
-                    itemBinding.root.layoutParams =
-                        LayoutParams(rowData.width, rowData.height)
-                    itemBinding.root.x = positionX.toFloat()
-                    itemBinding.root.y = positionY
-                    if (itemBinding.root.parent != null) {
-                        (itemBinding.root.parent as ViewGroup?)?.removeAllViews()
-                    }
-                    itemLayoutParent.addView(itemBinding.root)
-                }
-            })
+            checkVisibleWithScrollPosition(scrollLayout.scrollY, itemLayoutParent)
             itemLayoutParent.layoutParams.height = adapter!!.maxHeight
+        }
+    }
+
+    private fun checkVisibleWithScrollPosition(
+        scrollY: Int,
+        itemLayoutParent: FrameLayout
+    ) {
+        val indexSection = scrollY / heightScreen
+        loge("ParentSize: ${itemLayoutParent.childCount}, currentSection: $currentSectionScroll")
+        if (indexSection != currentSectionScroll) {
+            currentSectionScroll = indexSection
+            adapter?.let { adapter ->
+                val widthItem = width / adapter.span
+                val startIndexVisible = if (indexSection - sectionOffset >= 0)
+                    indexSection - sectionOffset else 0
+                for (index in startIndexVisible..(indexSection + sectionOffset)) {
+                    adapter.listSectionIndex.getOrNull(index)?.forEach { mapIndex ->
+                        loge("AddIndex: $mapIndex")
+                        addBindingItemToView(mapIndex, itemLayoutParent)
+                    }
+                }
+
+                adapter.listSectionIndex.getOrNull(indexSection - sectionOffset - 1)
+                    ?.forEach { mapIndex ->
+                        loge("RemoveIndex: $mapIndex")
+                        adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                            setBindingGone(itemBinding, itemLayoutParent)
+                        }
+                    }
+                adapter.listSectionIndex.getOrNull(indexSection + sectionOffset + 1)
+                    ?.forEach { mapIndex ->
+                        loge("RemoveIndex: $mapIndex")
+                        adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                            setBindingGone(itemBinding, itemLayoutParent)
+                        }
+                    }
+            }
         }
     }
 
@@ -126,16 +120,18 @@ class StaggeredListView @JvmOverloads constructor(
 
     }
 
-    private fun <ViewBinding : ViewDataBinding> setBindingVisible(
-        itemBinding: ViewBinding,
-        itemLayoutParent: FrameLayout
-    ) {
-        if (itemBinding.root.parent != null) {
-            if (itemBinding.root.parent != itemLayoutParent) {
-                (itemBinding.root.parent as ViewGroup?)?.removeAllViews()
-                itemLayoutParent.addView(itemBinding.root)
+    private fun addBindingItemToView(indexInData: Int, itemLayoutParent: FrameLayout) {
+        adapter!!.mapRowData[adapter!!.getItem(indexInData)]?.let { rowData ->
+            val positionX = rowData.columnIndex * (width / adapter!!.span)
+            val positionY = rowData.offsetY
+            val itemBinding = adapter!!.getViewBinding(indexInData)
+            itemBinding.root.layoutParams =
+                LayoutParams(rowData.width, rowData.height)
+            itemBinding.root.x = positionX.toFloat()
+            itemBinding.root.y = positionY
+            if (itemBinding.root.parent != null) {
+                (itemBinding.root.parent as ViewGroup?)?.removeView(itemBinding.root)
             }
-        } else {
             itemLayoutParent.addView(itemBinding.root)
         }
     }
@@ -176,6 +172,8 @@ class StaggeredListView @JvmOverloads constructor(
                 invalidate()
             }
 
+        var listener: Any? = null
+
         val heightScreen by lazy {
             context.resources.displayMetrics.heightPixels
         }
@@ -201,6 +199,8 @@ class StaggeredListView @JvmOverloads constructor(
             }
             val binding = mapBinding[itemPosition]!!
             binding.setVariable(BR.item, data[itemPosition])
+            binding.setVariable(BR.listener, listener)
+            binding.setVariable(BR.itemPosition, itemPosition)
             onConfigureWithBinding(binding, itemPosition)
             if (lifecycleOwner != null) {
                 binding.lifecycleOwner = lifecycleOwner
