@@ -40,17 +40,13 @@ class StaggeredListView @JvmOverloads constructor(
     var countOnLayout = 0
     private var currentSectionScroll = -1
 
-    private var sectionOffset = 0
+    private var sectionOffset = 1
 
     val heightScreen by lazy {
         context.resources.displayMetrics.heightPixels
     }
 
-    @SuppressLint("DrawAllocation")
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        countOnLayout++
-        loge("Count Measure: $countOnLayout")
+    fun validateWithAdapter() {
         if (width == 0)
             return
         adapter?.data?.firstOrNull()?.let command@{
@@ -77,35 +73,29 @@ class StaggeredListView @JvmOverloads constructor(
                 if (indexSection != currentSectionScroll) {
                     currentSectionScroll = indexSection
                     adapter?.let { adapter ->
-                        adapter.listSectionIndex[indexSection].forEach { mapIndex ->
-                            loge("AddIndex: $mapIndex")
-                            adapter.mapBinding[mapIndex]?.let { itemBinding ->
-                                setBindingVisible(itemBinding, itemLayoutParent)
+                        for (index in indexSection - sectionOffset..indexSection + sectionOffset) {
+                            adapter.listSectionIndex.getOrNull(index)?.forEach { mapIndex ->
+                                loge("AddIndex: $mapIndex")
+                                adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                                    setBindingVisible(itemBinding, itemLayoutParent)
+                                }
                             }
                         }
-                        if (indexSection > 0) {
-                            for (mapIndex in 0 until indexSection - sectionOffset) {
+
+                        adapter.listSectionIndex.getOrNull(indexSection - sectionOffset - 1)
+                            ?.forEach { mapIndex ->
                                 loge("RemoveIndex: $mapIndex")
                                 adapter.mapBinding[mapIndex]?.let { itemBinding ->
                                     setBindingGone(itemBinding, itemLayoutParent)
                                 }
                             }
-                            if (sectionOffset > 0) {
-                                //visible indexSection -offset
-                            }
-                        }
-                        if (indexSection < adapter.listSectionIndex.size - 1) {
-                            if (indexSection + 1 + sectionOffset < adapter.listSectionIndex.size)
-                                for (mapIndex in indexSection + 1 + sectionOffset until adapter.listSectionIndex.size) {
-                                    loge("RemoveIndex: $mapIndex")
-                                    adapter.mapBinding[mapIndex]?.let { itemBinding ->
-                                        setBindingGone(itemBinding, itemLayoutParent)
-                                    }
+                        adapter.listSectionIndex.getOrNull(indexSection + sectionOffset + 1)
+                            ?.forEach { mapIndex ->
+                                loge("RemoveIndex: $mapIndex")
+                                adapter.mapBinding[mapIndex]?.let { itemBinding ->
+                                    setBindingGone(itemBinding, itemLayoutParent)
                                 }
-                            if (sectionOffset > 0) {
-                                //visible indexSection + offset
                             }
-                        }
                     }
                 }
             }
@@ -127,6 +117,13 @@ class StaggeredListView @JvmOverloads constructor(
             })
             itemLayoutParent.layoutParams.height = adapter!!.maxHeight
         }
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        countOnLayout++
+        loge("Count Measure: $countOnLayout")
+
     }
 
     private fun <ViewBinding : ViewDataBinding> setBindingVisible(
@@ -282,7 +279,7 @@ class StaggeredListView @JvmOverloads constructor(
                         currentOffset += heightOfThisItem
                     }
                 }
-                staggeredListView?.requestLayout()
+                staggeredListView?.validateWithAdapter()
             }
         }
 

@@ -19,7 +19,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         rootActivity.grantPermissionStorage {
-            viewModel.loadListImage(40)
+            viewModel.loadListImage(-1)
         }
     }
 
