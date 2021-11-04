@@ -23,7 +23,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(), ImageLis
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         rootActivity.grantPermissionStorage {
-            viewModel.loadListImage(20)
+            viewModel.loadListImage()
         }
     }
 

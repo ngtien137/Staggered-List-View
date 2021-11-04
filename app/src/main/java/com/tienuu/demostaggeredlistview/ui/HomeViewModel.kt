@@ -14,16 +14,30 @@ import kotlinx.coroutines.withContext
 class HomeViewModel @Auto private constructor(private val imageRepository: ImageRepository) :
     ViewModel() {
 
+    companion object {
+        const val PAGE_SIZE = 20
+    }
+
     val liveListImage = MutableLiveData(arrayListOf<AppImage>())
 
     val eventLoading by lazy {
         MutableLiveData(Event())
     }
 
-    fun loadListImage(pageSize:Int) {
+    fun loadListImage() {
         eventLoading.value = Event(true)
         viewModelScope.launch(Dispatchers.IO) {
-            val list = imageRepository.loadImages(pageSize)
+            val list = imageRepository.loadImages(PAGE_SIZE)
+            withContext(Dispatchers.Main) {
+                liveListImage.value = list
+                eventLoading.value = Event(false)
+            }
+        }
+    }
+
+    fun loadMoreListImage() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = imageRepository.loadImages(PAGE_SIZE, liveListImage.value?.size ?: 0)
             withContext(Dispatchers.Main) {
                 liveListImage.value = list
                 eventLoading.value = Event(false)
