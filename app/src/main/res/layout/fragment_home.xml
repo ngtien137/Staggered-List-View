@@ -15,12 +15,32 @@
         android:layout_height="match_parent"
         tools:context=".ui.HomeFragment">
 
-        <lib.tienuu.staggeredlistview.StaggeredListView
+        <com.scwang.smart.refresh.layout.SmartRefreshLayout
             android:layout_width="match_parent"
-            android:id="@+id/staggeredListView"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_height="match_parent">
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:indeterminateTint="@color/green" />
+
+            <lib.tienuu.staggeredlistview.StaggeredListView
+                android:id="@+id/staggeredListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:indeterminateTint="@color/green" />
+
+
+        </com.scwang.smart.refresh.layout.SmartRefreshLayout>
+
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
@@ -39,6 +59,7 @@
                 android:indeterminateTint="@color/white" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -21,14 +21,14 @@ import androidx.recyclerview.widget.RecyclerView
 
 class StaggeredListView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
-) : FrameLayout(context, attrs) {
+) : ScrollView(context, attrs) {
 
     companion object {
         const val TAG = "StaggeredListView"
         const val SHOW_LOG = true
     }
 
-    val scrollLayout = LayoutInflater.from(context).inflate(R.layout.staggered_layout, null, false)
+    val scrollLayout = LayoutInflater.from(context).inflate(R.layout.staggered_layout, this, true)
 
     var adapter: StaggeredAdapter<out StaggeredData, out ViewDataBinding>? = null
         set(value) {
@@ -42,7 +42,7 @@ class StaggeredListView @JvmOverloads constructor(
 
     private var sectionOffset = 1
 
-    val heightScreen by lazy {
+    private val heightScreen by lazy {
         context.resources.displayMetrics.heightPixels
     }
 
@@ -50,15 +50,14 @@ class StaggeredListView @JvmOverloads constructor(
         if (width == 0)
             return
         adapter?.data?.firstOrNull()?.let command@{
-            val widthItem = width / adapter!!.span
-            scrollLayout.layoutParams = LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-            )
-            if (scrollLayout.parent != null) {
-                (scrollLayout.parent as ViewGroup?)?.removeAllViews()
-            }
-            addView(scrollLayout)
+//            scrollLayout.layoutParams = LayoutParams(
+//                LayoutParams.MATCH_PARENT,
+//                LayoutParams.WRAP_CONTENT
+//            )
+//            if (scrollLayout.parent != null) {
+//                (scrollLayout.parent as ViewGroup?)?.removeAllViews()
+//            }
+//            addView(scrollLayout)
 
             val parentWrap =
                 scrollLayout.findViewById<RelativeLayout>(R.id.parentWrap) //Wrap relative layout
@@ -66,7 +65,7 @@ class StaggeredListView @JvmOverloads constructor(
                 parentWrap.layoutParams.also { it.height = adapter!!.maxHeight }
             val itemLayoutParent = scrollLayout.findViewById<FrameLayout>(R.id.layoutParent)
 
-            (scrollLayout.findViewById<ScrollView>(R.id.scrollView)).viewTreeObserver.addOnScrollChangedListener {
+            viewTreeObserver.addOnScrollChangedListener {
                 val scrollY = scrollLayout.scrollY
                 checkVisibleWithScrollPosition(scrollY, itemLayoutParent)
             }
@@ -85,7 +84,6 @@ class StaggeredListView @JvmOverloads constructor(
         if (indexSection != currentSectionScroll) {
             currentSectionScroll = indexSection
             adapter?.let { adapter ->
-                val widthItem = width / adapter.span
                 val startIndexVisible = if (indexSection - sectionOffset >= 0)
                     indexSection - sectionOffset else 0
                 for (index in startIndexVisible..(indexSection + sectionOffset)) {
@@ -241,7 +239,11 @@ class StaggeredListView @JvmOverloads constructor(
                     val staggeredData = data[currentItemIndex]
                     val heightOfThisItem = widthItem / staggeredData.getRatio()
                     val heightLess = sumHeight - heightOfColumns - heightOfThisItem
-                    if (heightLess < heightOfColumns) {
+                    if (heightLess < heightOfColumns && col < span - 1) {
+                        if (heightOfColumns > maxHeight) {
+                            maxHeight = heightOfColumns.toInt()
+                        }
+                        listColumns[col].height = heightOfColumns.toInt()
                         col++
                         currentOffset = 0f
                         heightOfColumns = 0f
@@ -287,6 +289,7 @@ class StaggeredListView @JvmOverloads constructor(
             mapBinding.clear()
             listColumns.clear()
             mapRowData.clear()
+            maxHeight = 0
 
         }
 
