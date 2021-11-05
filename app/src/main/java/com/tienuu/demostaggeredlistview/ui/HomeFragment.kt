@@ -54,16 +54,22 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(), ImageLis
             }
         }
 
-//        binding.refreshLayout.setOnRefreshLoadMoreListener(object : OnRefreshLoadMoreListener{
-//            override fun onRefresh(refreshLayout: RefreshLayout) {
-//
-//            }
-//
-//            override fun onLoadMore(refreshLayout: RefreshLayout) {
-//
-//            }
-//
-//        })
+        binding.refreshLayout.setOnRefreshLoadMoreListener(object : OnRefreshLoadMoreListener {
+            override fun onRefresh(refreshLayout: RefreshLayout) {
+                viewModel.loadListImage {
+                    binding.refreshLayout.finishRefresh()
+                }
+            }
+
+            override fun onLoadMore(refreshLayout: RefreshLayout) {
+                viewModel.loadMoreListImage {
+                    adapter.validateWithList()
+                    binding.staggeredListView.validateWithAdapter()
+                    binding.refreshLayout.finishLoadMore()
+                }
+            }
+
+        })
     }
 
     override fun onImageClick(image: AppImage, itemPosition: Int) {

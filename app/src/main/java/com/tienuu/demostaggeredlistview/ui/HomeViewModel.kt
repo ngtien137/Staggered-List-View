@@ -24,22 +24,25 @@ class HomeViewModel @Auto private constructor(private val imageRepository: Image
         MutableLiveData(Event())
     }
 
-    fun loadListImage() {
+    fun loadListImage(onSuccess: () -> Unit = {}) {
         eventLoading.value = Event(true)
         viewModelScope.launch(Dispatchers.IO) {
             val list = imageRepository.loadImages(PAGE_SIZE)
             withContext(Dispatchers.Main) {
                 liveListImage.value = list
                 eventLoading.value = Event(false)
+                onSuccess.invoke()
             }
         }
     }
 
-    fun loadMoreListImage() {
+    fun loadMoreListImage(onSuccess: () -> Unit) {
+        eventLoading.value = Event(true)
         viewModelScope.launch(Dispatchers.IO) {
             val list = imageRepository.loadImages(PAGE_SIZE, liveListImage.value?.size ?: 0)
             withContext(Dispatchers.Main) {
-                liveListImage.value = list
+                liveListImage.value?.addAll(list)
+                onSuccess.invoke()
                 eventLoading.value = Event(false)
             }
         }

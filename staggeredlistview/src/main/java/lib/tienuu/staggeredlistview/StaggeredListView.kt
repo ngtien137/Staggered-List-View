@@ -28,7 +28,14 @@ class StaggeredListView @JvmOverloads constructor(
         const val SHOW_LOG = true
     }
 
-    val scrollLayout = LayoutInflater.from(context).inflate(R.layout.staggered_layout, this, true)
+    private val scrollLayout =
+        LayoutInflater.from(context).inflate(R.layout.staggered_layout, this, true)
+
+    private val parentWrap =
+        scrollLayout.findViewById<RelativeLayout>(R.id.parentWrap)
+
+    private val itemLayoutParent = scrollLayout.findViewById<FrameLayout>(R.id.layoutParent)
+
 
     var adapter: StaggeredAdapter<out StaggeredData, out ViewDataBinding>? = null
         set(value) {
@@ -50,38 +57,30 @@ class StaggeredListView @JvmOverloads constructor(
         if (width == 0)
             return
         adapter?.data?.firstOrNull()?.let command@{
-//            scrollLayout.layoutParams = LayoutParams(
-//                LayoutParams.MATCH_PARENT,
-//                LayoutParams.WRAP_CONTENT
-//            )
-//            if (scrollLayout.parent != null) {
-//                (scrollLayout.parent as ViewGroup?)?.removeAllViews()
-//            }
-//            addView(scrollLayout)
-
-            val parentWrap =
-                scrollLayout.findViewById<RelativeLayout>(R.id.parentWrap) //Wrap relative layout
+            //Wrap relative layout
             parentWrap.layoutParams =
                 parentWrap.layoutParams.also { it.height = adapter!!.maxHeight }
-            val itemLayoutParent = scrollLayout.findViewById<FrameLayout>(R.id.layoutParent)
 
             viewTreeObserver.addOnScrollChangedListener {
                 val scrollY = scrollLayout.scrollY
-                checkVisibleWithScrollPosition(scrollY, itemLayoutParent)
+                checkVisibleWithScrollPosition(scrollY)
             }
 
-            checkVisibleWithScrollPosition(scrollLayout.scrollY, itemLayoutParent)
+            checkVisibleWithScrollPosition(scrollLayout.scrollY)
             itemLayoutParent.layoutParams.height = adapter!!.maxHeight
         }
     }
 
+    fun invalidateWithCurrentScroll() {
+        checkVisibleWithScrollPosition(scrollLayout.scrollY, true)
+    }
+
     private fun checkVisibleWithScrollPosition(
-        scrollY: Int,
-        itemLayoutParent: FrameLayout
+        scrollY: Int, forceScroll: Boolean = false
     ) {
         val indexSection = scrollY / heightScreen
         loge("ParentSize: ${itemLayoutParent.childCount}, currentSection: $currentSectionScroll")
-        if (indexSection != currentSectionScroll) {
+        if (indexSection != currentSectionScroll || forceScroll) {
             currentSectionScroll = indexSection
             adapter?.let { adapter ->
                 val startIndexVisible = if (indexSection - sectionOffset >= 0)
@@ -176,7 +175,7 @@ class StaggeredListView @JvmOverloads constructor(
             context.resources.displayMetrics.heightPixels
         }
 
-        private val listColumns = ArrayList<DataColumn<Data>>()
+        private val listColumnsData = ArrayList<DataColumn<Data>>()
 
         val mapBinding = HashMap<Int, ViewBinding>()
 
@@ -186,6 +185,8 @@ class StaggeredListView @JvmOverloads constructor(
             private set
 
         val listSectionIndex = ArrayList<ArrayList<Int>>()
+
+        private var lastValidateSize = 0
 
         private fun createItemBinding(): ViewBinding {
             return DataBindingUtil.inflate(layoutInflater, layoutResource, null, false)
@@ -220,8 +221,9 @@ class StaggeredListView @JvmOverloads constructor(
 
         fun getCount() = data.size
 
-        fun invalidate() {
-            clearData()
+        fun invalidate(offsetIndex: Int = -1) {
+            if (offsetIndex == -1)
+                clearData()
             val widthView = staggeredListView?.width ?: 0
             if (!data.isNullOrEmpty() && widthView != 0) {
                 val widthItem = widthView / span
@@ -235,6 +237,11 @@ class StaggeredListView @JvmOverloads constructor(
                 var currentItemIndex = 0
                 var heightOfColumns = 0f
                 var currentOffset = 0f
+                if (offsetIndex != -1) {
+                    currentOffset = listColumnsData[col].height.toFloat()
+                    currentItemIndex = offsetIndex
+                    heightOfColumns = listColumnsData[col].height.toFloat()
+                }
                 while (col < span && currentItemIndex < data.size) {
                     val staggeredData = data[currentItemIndex]
                     val heightOfThisItem = widthItem / staggeredData.getRatio()
@@ -243,13 +250,17 @@ class StaggeredListView @JvmOverloads constructor(
                         if (heightOfColumns > maxHeight) {
                             maxHeight = heightOfColumns.toInt()
                         }
-                        listColumns[col].height = heightOfColumns.toInt()
+                        listColumnsData[col].height = heightOfColumns.toInt()
                         col++
                         currentOffset = 0f
                         heightOfColumns = 0f
+                        if (offsetIndex != -1) {
+                            currentOffset = listColumnsData[col].height.toFloat()
+                            heightOfColumns = listColumnsData[col].height.toFloat()
+                        }
                     }
-                    if (listColumns.size < col + 1) {
-                        listColumns.add(DataColumn())
+                    if (listColumnsData.size < col + 1) {
+                        listColumnsData.add(DataColumn())
                     }
                     val rowData = DataRow<Data>(
                         col, currentOffset, widthItem,
@@ -265,7 +276,7 @@ class StaggeredListView @JvmOverloads constructor(
                     listSectionIndex[indexOfSectionScroll].add(currentItemIndex)
 
                     mapRowData[staggeredData] = rowData
-                    listColumns[col].listData.add(staggeredData)
+                    listColumnsData[col].listData.add(staggeredData)
                     heightOfColumns += heightOfThisItem
                     currentItemIndex++
 
@@ -273,21 +284,33 @@ class StaggeredListView @JvmOverloads constructor(
                         if (heightOfColumns > maxHeight) {
                             maxHeight = heightOfColumns.toInt()
                         }
-                        listColumns[col].height = heightOfColumns.toInt()
+                        listColumnsData[col].height = heightOfColumns.toInt()
                         col++
                         currentOffset = 0f
                         heightOfColumns = 0f
+                        if (offsetIndex != -1 && col < span - 1) {
+                            currentOffset = listColumnsData[col].height.toFloat()
+                            heightOfColumns = listColumnsData[col].height.toFloat()
+                        }
                     } else {
                         currentOffset += heightOfThisItem
                     }
                 }
                 staggeredListView?.validateWithAdapter()
+                lastValidateSize = getCount()
+            }
+        }
+
+        fun validateWithList() {
+            if (getCount() != lastValidateSize) {
+                invalidate(lastValidateSize)
+                staggeredListView?.invalidateWithCurrentScroll()
             }
         }
 
         private fun clearData() {
             mapBinding.clear()
-            listColumns.clear()
+            listColumnsData.clear()
             mapRowData.clear()
             maxHeight = 0
 

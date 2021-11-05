@@ -16,7 +16,7 @@ class ImageRepository {
         val sortOrder = "${MediaStore.Images.Media.DATE_MODIFIED} DESC"
         var itemIndex = 0
         getApplication().getMedia<AppImage>(onCheckIfAddItem = { currentList, image ->
-            val isAddFileToList = File(image.path).exists()
+            var isAddFileToList = File(image.path).exists()
             if (isAddFileToList) {
                 if (offset == -1 || itemIndex >= offset) {
                     image.imageUri = ContentUris.withAppendedId(
@@ -37,6 +37,9 @@ class ImageRepository {
                     images.add(AppImage(image.id, image.path, width, height).also {
                         it.imageUri = image.imageUri
                     })
+                }
+                else{
+                    isAddFileToList = false
                 }
                 itemIndex++
             }
