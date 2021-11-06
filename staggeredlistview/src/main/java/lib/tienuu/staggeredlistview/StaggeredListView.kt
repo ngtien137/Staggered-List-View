@@ -3,6 +3,8 @@ package lib.tienuu.staggeredlistview
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,6 +20,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
+import java.lang.Exception
 
 class StaggeredListView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
@@ -280,7 +283,7 @@ class StaggeredListView @JvmOverloads constructor(
                     heightOfColumns += heightOfThisItem
                     currentItemIndex++
 
-                    if (heightOfColumns >= heightPerColumns || currentItemIndex==getCount()) {
+                    if (heightOfColumns >= heightPerColumns || currentItemIndex == getCount()) {
                         if (heightOfColumns > maxHeight) {
                             maxHeight = heightOfColumns.toInt()
                         }
@@ -296,6 +299,21 @@ class StaggeredListView @JvmOverloads constructor(
                         currentOffset += heightOfThisItem
                     }
                 }
+                try {
+                    refreshData()
+                } catch (e: Exception) {
+                    postRefreshData()
+                }
+            }
+        }
+
+        fun refreshData() {
+            staggeredListView?.validateWithAdapter()
+            lastValidateSize = getCount()
+        }
+
+        fun postRefreshData() {
+            Handler(Looper.getMainLooper()).post {
                 staggeredListView?.validateWithAdapter()
                 lastValidateSize = getCount()
             }
