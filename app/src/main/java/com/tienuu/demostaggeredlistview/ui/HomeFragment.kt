@@ -1,11 +1,17 @@
 package com.tienuu.demostaggeredlistview.ui
 
 import android.os.Bundle
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.core.view.ViewCompat
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.FragmentNavigator
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import com.base.baselibrary.fragment.BaseFragment
 import com.base.baselibrary.utils.observer
 import com.base.baselibrary.viewmodel.autoViewModels
+import com.base.baselibrary.views.ext.getWidthScreen
 import com.base.baselibrary.views.ext.loge
-import com.base.baselibrary.views.ext.toast
 import com.scwang.smart.refresh.layout.api.RefreshLayout
 import com.scwang.smart.refresh.layout.listener.OnRefreshLoadMoreListener
 import com.tienuu.demostaggeredlistview.MainActivity
@@ -14,11 +20,14 @@ import com.tienuu.demostaggeredlistview.adapter.ImageListener
 import com.tienuu.demostaggeredlistview.data.AppImage
 import com.tienuu.demostaggeredlistview.databinding.FragmentHomeBinding
 import com.tienuu.demostaggeredlistview.databinding.ItemImageBinding
+import com.tienuu.demostaggeredlistview.viewmodels.HomeViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import lib.tienuu.staggeredlistview.StaggeredListView
 
+@AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(), ImageListener {
 
-    private val viewModel by autoViewModels<HomeViewModel>()
+    private val viewModel by viewModels<HomeViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +51,10 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(), ImageLis
                 R.layout.item_image
             ) {
                 override fun onConfigureWithBinding(binding: ItemImageBinding, itemPosition: Int) {
-                    //This function like onBindViewHolder in RecyclerView.Adapter
+                    ViewCompat.setTransitionName(
+                        binding.imgItem,
+                        "img_${data[itemPosition].getPathForVisible()}"
+                    )
                 }
             }).also { adapter ->
                 adapter.listener = this
@@ -72,8 +84,16 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(), ImageLis
         })
     }
 
-    override fun onImageClick(image: AppImage, itemPosition: Int) {
-        loge("Click Pos: $itemPosition")
+    override fun onImageClick(imageView: AppCompatImageView, image: AppImage, itemPosition: Int) {
+        val extras = FragmentNavigatorExtras(
+            imageView to "img_${image.getPathForVisible()}"
+        )
+        val action =
+            HomeFragmentDirections.actionHomeFragmentToPreviewImageFragment(
+                image.getPathForVisible(),
+                imageHeight = (getWidthScreen() / image.getRatio()).toInt()
+            )
+        findNavController().navigate(action, extras)
     }
 
 }

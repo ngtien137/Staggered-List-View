@@ -1,5 +1,6 @@
 package com.tienuu.demostaggeredlistview.utils
 
+import android.graphics.Color
 import android.text.TextUtils
 import android.view.View
 import android.widget.CompoundButton
@@ -21,6 +22,7 @@ import com.base.baselibrary.views.custom.CustomViewPager
 import com.base.baselibrary.views.rv_touch_helper.ItemTouchHelperExtension
 import com.base.baselibrary.views.rv_touch_helper.VerticalDragTouchHelper
 import com.bumptech.glide.Glide
+import com.tienuu.demostaggeredlistview.R
 import java.io.File
 
 
@@ -205,5 +207,5 @@ fun CustomViewPager.setSwipeAble(swipe: Boolean?) {
 
 @BindingAdapter("glide_load_path")
 fun ImageView.glideLoadImage(path: String?) {
-    Glide.with(this).load(path).into(this)
+    Glide.with(this).load(path).placeholder(R.color.black).into(this)
 }

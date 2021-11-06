@@ -8,8 +8,9 @@ import com.bumptech.glide.Glide
 import com.tienuu.demostaggeredlistview.data.AppImage
 import java.io.File
 import java.lang.Exception
+import javax.inject.Inject
 
-class ImageRepository {
+class ImageRepository @Inject constructor() {
 
     fun loadImages(pageSize: Int = -1, offset: Int = -1): ArrayList<AppImage> {
         val images = arrayListOf<AppImage>()
@@ -37,8 +38,7 @@ class ImageRepository {
                     images.add(AppImage(image.id, image.path, width, height).also {
                         it.imageUri = image.imageUri
                     })
-                }
-                else{
+                } else {
                     isAddFileToList = false
                 }
                 itemIndex++

@@ -3,7 +3,9 @@ package com.tienuu.demostaggeredlistview
 import android.Manifest
 import com.base.baselibrary.activity.BaseActivity
 import com.tienuu.demostaggeredlistview.databinding.ActivityMainBinding
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     val listPermission = arrayOf(
