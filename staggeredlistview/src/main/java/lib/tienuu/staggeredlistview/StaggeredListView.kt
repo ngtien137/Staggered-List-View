@@ -280,7 +280,7 @@ class StaggeredListView @JvmOverloads constructor(
                     heightOfColumns += heightOfThisItem
                     currentItemIndex++
 
-                    if (heightOfColumns >= heightPerColumns) {
+                    if (heightOfColumns >= heightPerColumns || currentItemIndex==getCount()) {
                         if (heightOfColumns > maxHeight) {
                             maxHeight = heightOfColumns.toInt()
                         }
@@ -288,7 +288,7 @@ class StaggeredListView @JvmOverloads constructor(
                         col++
                         currentOffset = 0f
                         heightOfColumns = 0f
-                        if (offsetIndex != -1 && col < span - 1) {
+                        if (offsetIndex != -1 && col < span) {
                             currentOffset = listColumnsData[col].height.toFloat()
                             heightOfColumns = listColumnsData[col].height.toFloat()
                         }
