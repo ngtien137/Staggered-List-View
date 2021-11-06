@@ -1,5 +1,5 @@
 # Staggered List View
-- Custom a Staggered list item. Not using StaggeredGridLayoutManager.
+- Custom a Staggered list item looks like Pinterest. Not using Recycler view and StaggeredGridLayoutManager.
 - It's just a custom ScrollLayout with something I just made it look a bit like RecyclerView but it's not RecyclerView
 - Using Kotlin and databiding for binding item of list. So if you use java or using without databinding, you can refer my library
 ## Preview 
@@ -76,6 +76,13 @@ open class StaggeredAdapter<Data : StaggeredData, ViewBinding : ViewDataBinding>
             }).also { adapter ->
                 adapter.listener = this //This is listener which will be passed to item layout
             }
+```
+* Set adapter to layout
+You need set adapter after view posted, so use post function:
+```kotlin
+binding.staggeredListView.post {
+    adapter.data = it ?: arrayListOf()
+}
 ```
 * I support you with three variables in itemlayout, if you create three variable with these name, it's will have value in xml layout
 ```xml
