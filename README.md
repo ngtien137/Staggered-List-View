@@ -3,7 +3,9 @@
 - It's just a custom ScrollLayout with something I just made it look a bit like RecyclerView but it's not RecyclerView
 - Using Kotlin and databiding for binding item of list. So if you use java or using without databinding, you can refer my library
 ## Preview 
+
 <img src="https://github.com/ngtien137/Staggered-List-View/blob/master/preview.png" width="540" height="1116"/>
+  
 ## Getting Started
 ### Configure build.gradle (Project)
 * Add these lines:
