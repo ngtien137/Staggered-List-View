@@ -7,10 +7,8 @@ import com.base.baselibrary.utils.media_provider.getMedia
 import com.bumptech.glide.Glide
 import com.tienuu.demostaggeredlistview.data.AppImage
 import java.io.File
-import java.lang.Exception
-import javax.inject.Inject
 
-class ImageRepository @Inject constructor() {
+class ImageRepository constructor() {
 
     fun loadImages(pageSize: Int = -1, offset: Int = -1): ArrayList<AppImage> {
         val images = arrayListOf<AppImage>()

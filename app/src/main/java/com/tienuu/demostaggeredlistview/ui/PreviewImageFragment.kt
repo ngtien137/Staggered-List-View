@@ -1,11 +1,8 @@
 package com.tienuu.demostaggeredlistview.ui
 
 import android.os.Bundle
-import android.transition.ChangeBounds
 import android.transition.TransitionInflater
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.viewModels
 import com.base.baselibrary.fragment.BaseNavigationFragment
@@ -13,9 +10,7 @@ import com.tienuu.demostaggeredlistview.MainActivity
 import com.tienuu.demostaggeredlistview.R
 import com.tienuu.demostaggeredlistview.databinding.FragmentPreviewImageBinding
 import com.tienuu.demostaggeredlistview.viewmodels.PreviewViewModel
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class PreviewImageFragment : BaseNavigationFragment<FragmentPreviewImageBinding, MainActivity>() {
 
     private val viewModel by viewModels<PreviewViewModel>()

@@ -3,15 +3,12 @@ package com.tienuu.demostaggeredlistview.ui
 import android.os.Bundle
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.ViewCompat
-import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.FragmentNavigator
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import com.base.baselibrary.fragment.BaseFragment
 import com.base.baselibrary.utils.observer
 import com.base.baselibrary.viewmodel.autoViewModels
 import com.base.baselibrary.views.ext.getWidthScreen
-import com.base.baselibrary.views.ext.loge
 import com.scwang.smart.refresh.layout.api.RefreshLayout
 import com.scwang.smart.refresh.layout.listener.OnRefreshLoadMoreListener
 import com.tienuu.demostaggeredlistview.MainActivity
@@ -21,13 +18,11 @@ import com.tienuu.demostaggeredlistview.data.AppImage
 import com.tienuu.demostaggeredlistview.databinding.FragmentHomeBinding
 import com.tienuu.demostaggeredlistview.databinding.ItemImageBinding
 import com.tienuu.demostaggeredlistview.viewmodels.HomeViewModel
-import dagger.hilt.android.AndroidEntryPoint
 import lib.tienuu.staggeredlistview.StaggeredListView
 
-@AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding, MainActivity>(), ImageListener {
 
-    private val viewModel by viewModels<HomeViewModel>()
+    private val viewModel by autoViewModels<HomeViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
