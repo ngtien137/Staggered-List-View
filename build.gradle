@@ -28,7 +28,7 @@ buildscript {
         googleTruthVersion = '1.1.2'
         hiltJetPackVersion = '1.0.0-alpha03'
         hiltWorkerVersion = '1.0.0-beta01'
-        hiltVersion = '2.31.2-alpha'
+        hiltVersion = '2.37'
         junitVersion = '4.13.2'
         legacyVersion = '1.0.0'
         lifecycleVersion = '2.2.0'
@@ -52,11 +52,11 @@ buildscript {
         maven { url 'https://jitpack.io' }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:$gradleVersion"
+        classpath "com.android.tools.build:gradle:7.0.3"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
         classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$navigationVersion"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$hiltVersion"
-
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
 

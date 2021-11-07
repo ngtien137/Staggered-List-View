@@ -1,3 +1,4 @@
+include ':app',':staggeredlistview'
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -8,5 +9,3 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "DemoStaggeredListView"
-include ':app'
-include ':staggeredlistview'
