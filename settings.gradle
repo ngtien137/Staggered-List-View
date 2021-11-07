@@ -1,3 +1,4 @@
+rootProject.name = "DemoStaggeredListView"
 include ':app',':staggeredlistview'
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -8,4 +9,3 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-rootProject.name = "DemoStaggeredListView"
