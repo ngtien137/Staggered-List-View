@@ -24,7 +24,7 @@ import java.lang.Exception
 
 class StaggeredListView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
-) : ScrollView(context, attrs) {
+) : NestedScrollView(context, attrs) {
 
     companion object {
         const val TAG = "StaggeredListView"
@@ -224,6 +224,22 @@ class StaggeredListView @JvmOverloads constructor(
 
         fun getCount() = data.size
 
+        private fun getMinHeightColumnIndex(): Int {
+            var col = 0
+            var minHeight = listColumnsData.getOrNull(col)?.height ?: 0
+            for (i in 0 until span) {
+                if (listColumnsData.size < col + 1) {
+                    listColumnsData.add(DataColumn())
+                }
+                val colHeight = listColumnsData[i].height
+                if (colHeight < minHeight) {
+                    minHeight = colHeight
+                    col = i
+                }
+            }
+            return col
+        }
+
         fun invalidate(offsetIndex: Int = -1) {
             if (offsetIndex == -1)
                 clearData()
@@ -245,10 +261,16 @@ class StaggeredListView @JvmOverloads constructor(
                     currentItemIndex = offsetIndex
                     heightOfColumns = listColumnsData[col].height.toFloat()
                 }
-                while (col < span && currentItemIndex < data.size) {
+                while (currentItemIndex < data.size) {
                     val staggeredData = data[currentItemIndex]
                     val heightOfThisItem = widthItem / staggeredData.getRatio()
                     val heightLess = sumHeight - heightOfColumns - heightOfThisItem
+
+                    var findMinCol = getMinHeightColumnIndex()
+
+
+
+
                     if (heightLess < heightOfColumns && col < span - 1) {
                         if (heightOfColumns > maxHeight) {
                             maxHeight = heightOfColumns.toInt()
