@@ -228,9 +228,6 @@ class StaggeredListView @JvmOverloads constructor(
             var col = 0
             var minHeight = listColumnsData.getOrNull(col)?.height ?: 0
             for (i in 0 until span) {
-                if (listColumnsData.size < col + 1) {
-                    listColumnsData.add(DataColumn())
-                }
                 val colHeight = listColumnsData[i].height
                 if (colHeight < minHeight) {
                     minHeight = colHeight
@@ -245,88 +242,70 @@ class StaggeredListView @JvmOverloads constructor(
                 clearData()
             val widthView = staggeredListView?.width ?: 0
             if (!data.isNullOrEmpty() && widthView != 0) {
+                if (listColumnsData.size != span) {
+                    listColumnsData.clear()
+                    for (i in 0 until span) {
+                        listColumnsData.add(DataColumn())
+                    }
+                }
                 val widthItem = widthView / span
                 var sumHeight = 0f
                 data.forEach { staggeredData ->
                     sumHeight += widthItem / staggeredData.getRatio()
                 }
-                //Chiều cao dự kiến của mỗi cột
-                val heightPerColumns = sumHeight / span
-                var col = 0
                 var currentItemIndex = 0
-                var heightOfColumns = 0f
-                var currentOffset = 0f
                 if (offsetIndex != -1) {
-                    currentOffset = listColumnsData[col].height.toFloat()
                     currentItemIndex = offsetIndex
-                    heightOfColumns = listColumnsData[col].height.toFloat()
                 }
                 while (currentItemIndex < data.size) {
+                    var currentOffset = 0f
                     val staggeredData = data[currentItemIndex]
                     val heightOfThisItem = widthItem / staggeredData.getRatio()
-                    val heightLess = sumHeight - heightOfColumns - heightOfThisItem
 
-                    var findMinCol = getMinHeightColumnIndex()
+                    val findMinCol = getMinHeightColumnIndex()
+                    val currentColHeight =
+                        (listColumnsData.getOrNull(findMinCol)?.height ?: 0).toFloat()
+                    currentOffset = currentColHeight
 
-
-
-
-                    if (heightLess < heightOfColumns && col < span - 1) {
-                        if (heightOfColumns > maxHeight) {
-                            maxHeight = heightOfColumns.toInt()
-                        }
-                        listColumnsData[col].height = heightOfColumns.toInt()
-                        col++
-                        currentOffset = 0f
-                        heightOfColumns = 0f
-                        if (offsetIndex != -1) {
-                            currentOffset = listColumnsData[col].height.toFloat()
-                            heightOfColumns = listColumnsData[col].height.toFloat()
-                        }
-                    }
-                    if (listColumnsData.size < col + 1) {
-                        listColumnsData.add(DataColumn())
-                    }
                     val rowData = DataRow<Data>(
-                        col, currentOffset, widthItem,
+                        findMinCol, currentOffset, widthItem,
                         heightOfThisItem.toInt()
                     )
 
                     //add list for checking scroll
-
                     val indexOfSectionScroll = currentOffset.toInt() / heightScreen
                     if (listSectionIndex.getOrNull(indexOfSectionScroll) == null) {
                         listSectionIndex.add(arrayListOf())
                     }
                     listSectionIndex[indexOfSectionScroll].add(currentItemIndex)
+                    listColumnsData[findMinCol].height =
+                        (currentColHeight + heightOfThisItem).toInt()
 
                     mapRowData[staggeredData] = rowData
-                    listColumnsData[col].listData.add(staggeredData)
-                    heightOfColumns += heightOfThisItem
+                    listColumnsData[findMinCol].listData.add(staggeredData)
                     currentItemIndex++
 
-                    if (heightOfColumns >= heightPerColumns || currentItemIndex == getCount()) {
-                        if (heightOfColumns > maxHeight) {
-                            maxHeight = heightOfColumns.toInt()
-                        }
-                        listColumnsData[col].height = heightOfColumns.toInt()
-                        col++
-                        currentOffset = 0f
-                        heightOfColumns = 0f
-                        if (offsetIndex != -1 && col < span) {
-                            currentOffset = listColumnsData[col].height.toFloat()
-                            heightOfColumns = listColumnsData[col].height.toFloat()
-                        }
-                    } else {
-                        currentOffset += heightOfThisItem
-                    }
                 }
+                validateMaxHeight()
                 try {
                     refreshData()
                 } catch (e: Exception) {
                     postRefreshData()
                 }
             }
+        }
+
+        private fun validateMaxHeight() {
+            var maxHeight = 0
+            if (listColumnsData.isNotEmpty()) {
+                for (i in 0 until listColumnsData.size) {
+                    val colHeight = listColumnsData[i].height
+                    if (colHeight > maxHeight) {
+                        maxHeight = colHeight
+                    }
+                }
+            }
+            this.maxHeight = maxHeight
         }
 
         fun refreshData() {

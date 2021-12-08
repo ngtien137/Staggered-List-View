@@ -28,6 +28,7 @@
                 android:indeterminateTint="@color/green" />
 
             <lib.tienuu.staggeredlistview.StaggeredListView
+                android:scrollbars="vertical"
                 android:id="@+id/staggeredListView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
